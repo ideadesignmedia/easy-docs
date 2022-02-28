@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import Toggle from './helper/toggle'
+import Toggle from './toggle'
 class LOGO extends HTMLElement {
     constructor() {
         super()
@@ -32,7 +32,7 @@ class Header extends Component {
         return (<div id="header">
             <div id="headgrid">
                 <div id="logo" onClick={() => window.redirect('/')}><app-logo></app-logo></div></div>
-            {window.app.state.auth && <>
+            {this.props.logged && <>
                 <div id="buttons">
                     {window.app.state.location === '/document' && <div>
                         <span>Autosave</span>

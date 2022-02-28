@@ -11,7 +11,8 @@ const saveError = global.saveError
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
-const app = require('express')()
+const express = require('express')
+const app = express()
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const sanitize = require('sanitize')
@@ -33,7 +34,7 @@ const upload = multer({
         cb(null, file);
     }
 })
-const Doc = DB.createModel(db, 'doc', (data) => {
+const Doc = DB.makeModel(db, 'doc', (data) => {
     if (!data.name) throw new Error('Missing Name')
 })
 const Docs = new Doc()
@@ -70,39 +71,38 @@ app.post('/save', (req, res) => {
     if (!req.body.document) return res.status(500).json({ error: true, message: 'Missing Document' })
     let { _id, content, name, draft, draftContent, published, tags, category } = req.body.document
     if (!name && !content) return res.status(500).json({ error: true, message: 'Missing name and content' })
-    let id = _id
-    if (id) {
-        Docs.find({ _id: id }).then(policy => {
-            if (policy) {
-                if (name) policy.name = name
-                if (content) policy.content = content
-                if (typeof published === 'boolean') policy.published = published
-                if (typeof draft === 'boolean') policy.draft = draft
-                if (draftContent) policy.draftContent = draftContent
-                if (tags) policy.tags = tags
-                if (category) policy.category = category
-                policy.modified = new Date()
-                new Doc(policy).save().then(document => res.status(200).json({ error: false, document })).catch(e => {
+    if (_id) {
+        Docs.find({ _id }).then(document => {
+            if (document) {
+                if (name) document.name = name
+                if (content) document.content = content
+                if (typeof published === 'boolean') document.published = published
+                if (typeof draft === 'boolean') document.draft = draft
+                if (draftContent) document.draftContent = draftContent
+                if (tags) document.tags = tags
+                if (category) document.category = category
+                document.modified = new Date()
+                new Doc(document).save().then(document => res.status(200).json({ error: false, document })).catch(e => {
                     saveError(e)
                     return res.status(500).json({ error: true, message: 'db ERROR' })
                 })
             } else {
-                return res.status(500).json({ error: true, message: 'Unable to locate document: ' + id })
+                return res.status(500).json({ error: true, message: 'Unable to locate document: ' + _id })
             }
         }).catch(e => {
             saveError(e)
             return res.status(500).json({ error: true, message: e })
         })
     } else {
-        let policy = { _id: new mongo.Types.ObjectId().toHexString(), creator: req.cookies['userid'] }
-        if (name) policy.name = name
-        if (content) policy.content = content
-        if (draftContent) policy.draftContent = draftContent
-        if (typeof published === 'boolean') policy.published = published
-        if (typeof draft === 'boolean') policy.draft = draft
-        if (tags) policy.tags = tags
-        if (category) policy.category = category
-        new Doc(policy).save().then(document => {
+        let document = { _creator: req.cookies['userid'] }
+        if (name) document.name = name
+        if (content) document.content = content
+        if (draftContent) document.draftContent = draftContent
+        if (typeof published === 'boolean') document.published = published
+        if (typeof draft === 'boolean') document.draft = draft
+        if (tags) document.tags = tags
+        if (category) document.category = category
+        new Doc(document).save().then(document => {
             return res.status(200).json({ error: false, document })
         }).catch(e => {
             saveError(e)

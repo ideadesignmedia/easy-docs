@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import { EditorState, convertFromRaw, convertToRaw, Modifier, AtomicBlockUtils, ContentState, convertFromHTML } from 'draft-js';
 import { Editor } from "react-draft-wysiwyg";
 import draftToHtml from 'draftjs-to-html';
-import Toggle from './helper/toggle'
+import Toggle from './toggle'
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 const Preview = (props) => {
     let doc = (props.document ? EditorState.createWithContent(convertFromRaw(JSON.parse(props.document))) : EditorState.createEmpty())
-    return (<><div id="dochead"><div id="over"><h1>{props.name || 'Untitled Document'}</h1>{window.app.state.auth && !props.preview && <div id="buttons"><button onClick={e => {
+    return (<><div id="dochead"><div id="over"><h1>{props.name || 'Untitled Document'}</h1>{!props.preview && <div id="buttons"><button onClick={e => {
         if (typeof props.edit === 'function') props.edit()
     }}>Edit</button><button onClick={e => {
         if (typeof props.delete === 'function') props.delete()
@@ -61,7 +61,6 @@ class CustomOption2 extends Component {
         var start = selectionState.getStartOffset();
         var end = selectionState.getEndOffset();
         var selectedText = currentContentBlock.getText().slice(start, end);
-        console.log(selectedText)
         const contentState = Modifier.replaceText(
             editorState.getCurrentContent(),
             editorState.getSelection(),
@@ -149,10 +148,10 @@ class TextEditor extends Component {
                                 {this.props.categories && this.props.categories.map((u, i) => (<option value={u} key={i}>{u.toUpperCase()}</option>))}
                             </select>
                         </div>
-                        {<button onClick={e => this.setState({ preview: true })}>Preview {this.props.draft ? 'Draft' : 'Policy'}</button>}
+                        {<button onClick={e => this.setState({ preview: true })}>Preview {this.props.draft ? 'Draft' : 'Document'}</button>}
                         <button onClick={
                             e => {
-                                if (!this.props.name) return window.flash('Please choose a policy name before saving.')
+                                if (!this.props.name) return window.flash('Please choose a document name before saving.')
                                 window.app.setDraft()
                             }}>{this.props.draft ? 'Save Draft' : 'Save as Draft'}</button>
                         {this.props.draft && <button onClick={() => window.app.setDraft(true)}>Revert Draft</button>}
@@ -161,7 +160,7 @@ class TextEditor extends Component {
                             this.setState({ tags: !this.state.tags })
                         }}>{this.state.tags ? 'Close Tags' : 'View Tags'}</button>
                         {this.props.draft && this.props.published && <button onClick={e => { window.app.toggleDoc() }}>View Published</button>}
-                        {this.props.draft && this.props.published && <button onClick={e => { window.app.delete() }}>Delete Policy</button>}
+                        {this.props.draft && this.props.published && <button onClick={e => { window.app.delete() }}>Delete Document</button>}
                     </div>
                     {this.state.tags && <div style={{ gridArea: '2 / 1 / span 1 / span 3' }} className="b1">
                         <div className="b1">

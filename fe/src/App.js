@@ -29,8 +29,8 @@ class App extends Component {
     modified: null,
     draft: false,
     published: false,
-    policies: [],
-    gotPolicies: false,
+    documents: [],
+    gotDocuments: false,
     stored: null,
     categories: [],
     taglist: [],
@@ -44,40 +44,40 @@ class App extends Component {
   async componentDidMount() {
     if (this.state.location !== this.props.location.pathname) {
       this.setState({ location: this.props.location.pathname, queries: this.queries() })
-    } else if (this.state.policies?.length > 0 && (this.state.location === '/' || this.state.location === '/document') && this.state.auth) {
+    } else if (this.state.documents?.length > 0 && (this.state.location === '/' || this.state.location === '/document')) {
       if (!this.state.current && this.state.queries.find(u => u.key === 'id')) {
         let id = this.state.queries.find(u => u.key === 'id').value
-        let policy = this.state.policies.find(u => u._id === id)
-        if (policy) {
-          let { content, name, draftContent, draft, published, created, modified, category, tags } = policy
-          this.setState({ current: policy._id, name, document: this.state.edit && draft ? draftContent : content, draft, published, created, modified, category, tags })
+        let document = this.state.documents.find(u => u._id === id)
+        if (document) {
+          let { content, name, draftContent, draft, published, created, modified, category, tags } = document
+          this.setState({ current: document._id, name, document: this.state.edit && draft ? draftContent : content, draft, published, created, modified, category, tags })
         } else {
           window.redirect('/')
         }
       }
-    } else if (this.state.auth && !this.state.gotPolicies && !this.gettingPolicies) {
-      this.getPolicies().catch(e => window.flash(e))
+    } else if (!this.state.gotDocuments && !this.gettingDocuments) {
+      this.getDocuments().catch(e => window.flash(e))
     }
-    if (this.state.auth && !this.state.gotTags && !this.gettingTags) this.getTaglist().catch(e => window.flash(e))
-    if (this.state.auth && !this.state.gotCategories && !this.gettingCategories) this.getCategories().catch(e => window.flash(e))
+    // if (this.state.auth && !this.state.gotTags && !this.gettingTags) this.getTaglist().catch(e => window.flash(e))
+    // if (this.state.auth && !this.state.gotCategories && !this.gettingCategories) this.getCategories().catch(e => window.flash(e))
   }
   componentDidUpdate() {
     if (this.state.location !== this.props.location.pathname) {
       this.setState({ location: this.props.location.pathname, queries: this.queries() })
-    } else if (this.state.location === '/document' && this.state.policies?.length > 0 && !this.state.current && this.state.queries.find(u => u.key === 'id')) {
+    } else if (this.state.location === '/document' && this.state.documents?.length > 0 && !this.state.current && this.state.queries.find(u => u.key === 'id')) {
       let id = this.state.queries.find(u => u.key === 'id').value
-      let policy = this.state.policies.find(u => u._id === id)
-      if (policy) {
-        let { content, name, draftContent, draft, published, created, modified, category, tags } = policy
-        this.setState({ current: policy._id, name, document: this.state.edit && draft ? draftContent : content, draft, published, created, modified, category, tags })
+      let document = this.state.documents.find(u => u._id === id)
+      if (document) {
+        let { content, name, draftContent, draft, published, created, modified, category, tags } = document
+        this.setState({ current: document._id, name, document: this.state.edit && draft ? draftContent : content, draft, published, created, modified, category, tags })
       } else {
         window.redirect('/')
       }
-    } else if (this.state.auth && !this.state.gotPolicies && !this.gettingPolicies) {
-      this.setState({ gotPolicies: true }, () => this.getPolicies().catch(e => window.flash(e)))
+    } else if (!this.state.gotDocuments && !this.gettingDocuments) {
+      this.setState({ gotDocuments: true }, () => this.getDocuments().catch(e => window.flash(e)))
     }
-    if (this.state.auth && !this.state.gotTags && !this.gettingTags) this.getTaglist().catch(e => window.flash(e))
-    if (this.state.auth && !this.state.gotCategories && !this.gettingCategories) this.getCategories().catch(e => window.flash(e))
+    // if (this.state.auth && !this.state.gotTags && !this.gettingTags) this.getTaglist().catch(e => window.flash(e))
+    // if (this.state.auth && !this.state.gotCategories && !this.gettingCategories) this.getCategories().catch(e => window.flash(e))
   }
   request(page, method, data) {
     return new Promise((res, rej) => {
@@ -109,27 +109,27 @@ class App extends Component {
       }).catch(e => { this.gettingCategories = false; rej(e) })
     })
   }
-  getPolicies = (ids) => {
+  getDocuments = (ids) => {
     return new Promise((res, rej) => {
-      this.gettingPolicies = true
+      this.gettingDocuments = true
       this.request('/documents', 'post', ids).then(r => {
-        this.gettingPolicies = false
-        this.setState({ policies: r.policies, gotPolicies: true }, () => {
-          res(r.policies)
+        this.gettingDocuments = false
+        this.setState({ documents: r.documents, gotDocuments: true }, () => {
+          res(r.documents)
         })
-      }).catch(e => { this.gettingPolicies = false; window.app.logOut(); rej(e) })
+      }).catch(e => { this.gettingDocuments = false; window.app.logOut(); rej(e) })
     })
   }
-  savePolicy = (policy) => {
+  saveDocument = (document) => {
     return new Promise((res, rej) => {
-      if (!policy) return rej('NO POLICY PASSED')
+      if (!document) return rej('NO POLICY PASSED')
       this.saving = true
-      this.request('/save', 'post', { document: policy }).then(r => {
+      this.request('/save', 'post', { document }).then(r => {
         this.saving = false
-        let { policy } = r
-        window.flash(`${policy.draft ? 'Draft' : 'Policy'} Saved`)
-        this.getPolicies().then(r => {
-          res(policy)
+        let { document } = r
+        window.flash(`${document.draft ? 'Draft' : 'Document'} Saved`)
+        this.getDocuments().then(r => {
+          res(document)
         }).catch(e => rej(e))
       }).catch(e => rej(e))
     })
@@ -138,10 +138,10 @@ class App extends Component {
     this.setState({ current: '', document: '', name: '', edit: true }, () => window.redirect('/document'))
   }
   set = (id) => {
-    let policy = window.app.state.policies.find(u => u._id === id)
-    if (!policy) return window.flash('Unable to load policy' + id)
+    let document = window.app.state.documents.find(u => u._id === id)
+    if (!document) return window.flash('Unable to load document' + id)
 
-    let { content, name, draftContent, draft, published, created, modified, category, tags } = policy
+    let { content, name, draftContent, draft, published, created, modified, category, tags } = document
     if (this.state.auth && draft) {
       this.setState({ current: id, document: draftContent, draft: true, published, category, tags, name, edit: true, created, modified }, () => window.redirect(`/document?id=${id}`))
     } else if (!this.state.auth || this.state.type !== 'admin') {
@@ -153,21 +153,21 @@ class App extends Component {
   edit = () => {
     this.setState({ edit: !this.state.edit }, () => {
       if (this.state.edit === false) {
-        this.getPolicies().catch(e => window.flash(e))
+        this.getDocuments().catch(e => window.flash(e))
       } else if (this.state.edit === true && this.state.toggle) {
-        let policy = this.state.policies.find(u => u._id === this.state.current)
-        if (policy) {
-          let { draft, content, draftContent } = policy
-          let document = !draft ? content : this.state.stored ? this.state.stored : draftContent
+        let document = this.state.documents.find(u => u._id === this.state.current)
+        if (document) {
+          let { draft, content, draftContent } = document
+          document = !draft ? content : this.state.stored ? this.state.stored : draftContent
           this.setState({ toggle: !this.state.toggle, draft: !this.state.draft, document }, () => {
             if (window.editor) window.editor.setState({ editor: window.editor.init() })
           })
         }
       } else if (this.state.edit === true) {
-        let policy = this.state.policies.find(u => u._id === this.state.current)
-        if (policy) {
-          let { draft, content, draftContent } = policy
-          let document = !draft ? content : draftContent
+        let document = this.state.documents.find(u => u._id === this.state.current)
+        if (document) {
+          let { draft, content, draftContent } = document
+          document = !draft ? content : draftContent
           this.setState({ draft, document }, () => {
             if (window.editor) window.editor.setState({ editor: window.editor.init() })
           })
@@ -176,9 +176,9 @@ class App extends Component {
     })
   }
   delete = () => {
-    this.request('/delete-policy', 'post', { _id: this.state.current }).then(r => {
-      window.flash('Deleted Policy')
-      this.getPolicies().then(() => {
+    this.request('/delete-document', 'post', { _id: this.state.current }).then(r => {
+      window.flash('Deleted Document')
+      this.getDocuments().then(() => {
         window.redirect('/')
       }).catch(e => window.flash(e))
     }).catch(e => window.flash(e))
@@ -189,13 +189,13 @@ class App extends Component {
       if (!id) {
         this.new()
       } else {
-        let policy = window.app.state.policies.find(u => u._id === id)
-        if (policy.published) {
-          policy.draftContent = policy.content
-          this.savePolicy(policy).then(policy => {
-            console.log(policy)
-            let { name, draftContent, draft, published, created, modified, category, tags } = policy
-            this.setState({ current: policy._id, name, document: draftContent, draft, published, created, modified, category, tags }, () => {
+        let document = window.app.state.documents.find(u => u._id === id)
+        if (document.published) {
+          document.draftContent = document.content
+          this.saveDocument(document).then(document => {
+            console.log(document)
+            let { name, draftContent, draft, published, created, modified, category, tags } = document
+            this.setState({ current: document._id, name, document: draftContent, draft, published, created, modified, category, tags }, () => {
               if (window.editor) window.editor.setState({ editor: window.editor.init() })
             })
           }).catch(e => window.flash(e))
@@ -205,18 +205,18 @@ class App extends Component {
       }
     } else {
       if (!id) {
-        let policy = { name: this.state.name, content: this.state.document, draftContent: this.state.document, published: false, draft: true }
-        this.savePolicy(policy).then(policy => {
-          let { name, draftContent, draft, published, created, modified, category, tags } = policy
-          this.setState({ current: policy._id, name, document: draftContent, draft, published, created, modified, category, tags })
+        let document = { name: this.state.name, content: this.state.document, draftContent: this.state.document, published: false, draft: true }
+        this.saveDocument(document).then(document => {
+          let { name, draftContent, draft, published, created, modified, category, tags } = document
+          this.setState({ current: document._id, name, document: draftContent, draft, published, created, modified, category, tags })
         }).catch(e => window.flash(e))
       } else {
-        let policy = window.app.state.policies.find(u => u._id === id)
-        if (!policy.draft) policy.draft = true
-        policy.draftContent = this.state.document
-        this.savePolicy(policy).then(policy => {
-          let { name, draftContent, draft, published, created, modified, category, tags } = policy
-          this.setState({ current: policy._id, name, document: draftContent, draft, published, created, modified, category, tags })
+        let document = window.app.state.documents.find(u => u._id === id)
+        if (!document.draft) document.draft = true
+        document.draftContent = this.state.document
+        this.saveDocument(document).then(document => {
+          let { name, draftContent, draft, published, created, modified, category, tags } = document
+          this.setState({ current: document._id, name, document: draftContent, draft, published, created, modified, category, tags })
         }).catch(e => window.flash(e))
       }
     }
@@ -224,39 +224,39 @@ class App extends Component {
   publish() {
     let id = window.app.state.current
     if (id) {
-      let policy = window.app.state.policies.find(u => u._id === id)
-      if (!id) return window.flash('Issue publishing policy')
-      policy.name = window.app.state.name
-      policy.draft = false
-      policy.published = true
-      policy.modified = new Date()
-      policy.content = window.app.state.document
-      policy.draftContent = ''
-      policy.tags = window.app.state.tags
-      policy.category = window.app.state.category
-      window.app.savePolicy(policy).then(policy => {
-        let { name, content, draft, published, created, modified, category, tags } = policy
-        window.app.setState({ current: policy._id, name, document: content, draft, published, created, modified, category, tags })
+      let document = window.app.state.documents.find(u => u._id === id)
+      if (!id) return window.flash('Issue publishing document')
+      document.name = window.app.state.name
+      document.draft = false
+      document.published = true
+      document.modified = new Date()
+      document.content = window.app.state.document
+      document.draftContent = ''
+      document.tags = window.app.state.tags
+      document.category = window.app.state.category
+      window.app.saveDocument(document).then(document => {
+        let { name, content, draft, published, created, modified, category, tags } = document
+        window.app.setState({ current: document._id, name, document: content, draft, published, created, modified, category, tags })
       }).catch(e => window.flash(e))
     } else {
-      let policy = { name: window.app.state.name, content: window.app.state.document, published: true, draft: false, tags: window.app.state.tags, category: window.app.state.category }
-      window.app.savePolicy(policy).then(policy => {
-        let { name, content, draft, published, created, modified, category, tags } = policy
-        window.app.setState({ current: policy._id, name, document: content, draft, published, created, modified, category, tags })
+      let document = { name: window.app.state.name, content: window.app.state.document, published: true, draft: false, tags: window.app.state.tags, category: window.app.state.category }
+      window.app.saveDocument(document).then(document => {
+        let { name, content, draft, published, created, modified, category, tags } = document
+        window.app.setState({ current: document._id, name, document: content, draft, published, created, modified, category, tags })
       }).catch(e => window.flash(e))
     }
   }
   toggleDoc = () => {
     let { current, draft } = this.state
     if (current) {
-      let policy = this.state.policies.find(u => u._id === current)
-      if (policy) {
+      let document = this.state.documents.find(u => u._id === current)
+      if (document) {
         if (draft) {
-          this.setState({ edit: false, draft: false, stored: this.state.document, document: policy.content, toggle: !this.state.toggle }, () => {
+          this.setState({ edit: false, draft: false, stored: this.state.document, document: document.content, toggle: !this.state.toggle }, () => {
             if (window.editor) window.editor.setState({ preview: true })
           })
         } else {
-          this.setState({ edit: false, draft: true, document: this.state.stored || policy.draftContent, toggle: !this.state.toggle })
+          this.setState({ edit: false, draft: true, document: this.state.stored || document.draftContent, toggle: !this.state.toggle })
         }
       }
     }
@@ -322,10 +322,10 @@ class App extends Component {
     clearTimeout(this.save)
     this.save = setTimeout(() => {
       if (this.saving) return
-      let policy = this.state.policies.find(u => u._id === this.state.current)
-      if (policy) {
-        let { draft, published, content, draftContent } = policy
-        this.savePolicy({ name: this.state.name, content: draft ? content : this.state.document, draftContent: this.state.draft && this.state.edit ? this.state.document : draftContent, published, draft, tags: this.state.tags, category: this.state.category, _id: this.state.current }).catch(e => window.flash(e))
+      let document = this.state.documents.find(u => u._id === this.state.current)
+      if (document) {
+        let { draft, published, content, draftContent } = document
+        this.saveDocument({ name: this.state.name, content: draft ? content : this.state.document, draftContent: this.state.draft && this.state.edit ? this.state.document : draftContent, published, draft, tags: this.state.tags, category: this.state.category, _id: this.state.current }).catch(e => window.flash(e))
       }
     }, 2150)
   }
@@ -348,28 +348,26 @@ class App extends Component {
     })
   }
   render() {
-    if (!this.state.auth) return (<div className="App"><Header logged={false}></Header><Login></Login></div>)
-    if (!this.state.gotPolicies) return (<div className="App"><Header logged={true}></Header><div className="b1"><h3>Loading Policies</h3><Spinner /></div></div>)
+    if (!this.state.gotDocuments) return (<div className="App"><Header logged={true}></Header><div className="b1"><h3>Loading Documents</h3><Spinner /></div></div>)
     return (
       <div className="App">
         <Header autosave={this.state.autosave} logged={true}></Header>
         <Route exact path="/">
           <div className="b1" style={{justifyContent: 'flex-start', overflowY: 'auto'}}>
-            <h3>Corporate Policies</h3>
+            <h3>DOCUMENTS</h3>
             <div className="b2 jsb" style={{overflow: 'visible'}}>
-              {this.state.type === 'admin' && <button id="addButton" onClick={e => this.new()}>Add Policy</button>}
-              <SearchBar placeholder={'Search Policies'} indexes={['name', 'category', 'tags']} items={this.state.policies} mainKey={'_id'} template={(u, i) => (<div id={u._id} key={i} onClick={e => window.app.set(e.target.id)}>
-                {u.name || 'Untitled Policy'}
+              <SearchBar placeholder={'Search Documents'} indexes={['name', 'category', 'tags']} items={this.state.documents} mainKey={'_id'} template={(u, i) => (<div id={u._id} key={i} onClick={e => window.app.set(e.target.id)}>
+                {u.name || 'Untitled Document'}
               </div>)}></SearchBar>
             </div>
             <div style={{ maxWidth: '80%', width: '80%' }}>
               <div id="homepageList" className="c3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-                {this.splitArray(this.nameSort(this.state.type === 'admin' ? this.state.policies : this.state.policies.filter(u => u.published)), 3).map((u, i) => <ul key={i} className="policylist">
+                {this.splitArray(this.nameSort(this.state.type === 'admin' ? this.state.documents : this.state.documents.filter(u => u.published)), 3).map((u, i) => <ul key={i} className="policylist">
                   {u.map((u, i) => {
                     if (!u) return null
                     return (<li key={i} id={u._id} onClick={e => {
                       this.set(e.target.id)
-                    }}>{u.name || 'Untitled Policy'}</li>)
+                    }}>{u.name || 'Untitled Document'}</li>)
                   })}
                 </ul>)}
               </div></div>
